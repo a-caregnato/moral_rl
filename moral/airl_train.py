@@ -13,12 +13,12 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 if __name__ == '__main__':
     # Load demonstrations
-    expert_trajectories = pickle.load(open('../demonstrations/ppo_demos_v3_[0,1,0,1].pk', 'rb'))
+    expert_trajectories = pickle.load(open('./demos/ppo_demos_small_multitarget_v0.pk', 'rb'))[0] # this zero takes only trajectories, not the rest of stuff used in eval_demos
 
     # Init WandB & Parameters
     wandb.init(project='AIRL', config={
-        'env_id': 'randomized_v3',
-        'env_steps': 6e6,
+        'env_id': 'small_multitarget_v0',
+        'env_steps': 1000000,
         'batchsize_discriminator': 512,
         'batchsize_ppo': 12,
         'n_workers': 12,
@@ -63,11 +63,11 @@ if __name__ == '__main__':
         airl_state = torch.tensor(states).to(device).float()
         airl_next_state = torch.tensor(next_states).to(device).float()
         airl_action_prob = torch.exp(torch.tensor(log_probs)).to(device).float()
-        airl_rewards = discriminator.predict_reward(airl_state, airl_next_state, config.gamma, airl_action_prob)
+        airl_rewards = discriminator.predict_reward(airl_state, airl_next_state, config.gamma, airl_action_prob) # \hat{r}
         airl_rewards = list(airl_rewards.detach().cpu().numpy() * [0 if i else 1 for i in done])
 
         # Save Trajectory
-        train_ready = dataset.write_tuple(states, actions, airl_rewards, done, log_probs)
+        train_ready = dataset.write_tuple(states, actions, airl_rewards, done, log_probs) # GENERATOR trajectories
 
         if train_ready:
             # Log Objectives
@@ -99,4 +99,4 @@ if __name__ == '__main__':
         states_tensor = torch.tensor(states).float().to(device)
 
     vec_env.close()
-    torch.save(discriminator.state_dict(), 'saved_models/discriminator_v3_[0,1,0,1].pt')
+    torch.save(discriminator.state_dict(), './saved_discriminators/teste.pt')

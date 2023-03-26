@@ -12,6 +12,7 @@ class DiscriminatorMLP(nn.Module):
     def __init__(self, state_shape, in_channels=6):
         super(DiscriminatorMLP, self).__init__()
 
+        #MLP == multilayer perceptron
         self.state_shape = state_shape
         self.in_channels = in_channels
 
@@ -233,7 +234,7 @@ def training_sampler(expert_trajectories, policy_trajectories, ppo, batch_size, 
     for i in range(batch_size):
         # 1 if (s,a,s') comes from expert, 0 otherwise
         # expert_boolean = np.random.randint(2)
-        expert_boolean = 1 if i < batch_size/2 else 0
+        expert_boolean = 1 if i < batch_size/2 else 0 # half the battch is expert and half from generator, the first half is expert
         if expert_boolean == 1:
             selected_trajectories = expert_trajectories
         else:

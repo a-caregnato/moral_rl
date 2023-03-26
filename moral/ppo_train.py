@@ -4,7 +4,9 @@ import torch
 from envs.gym_wrapper import *
 import wandb
 import argparse
-
+import os
+import pickle
+from matplotlib import pyplot as plt
 
 # Use GPU if available
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -18,13 +20,13 @@ if __name__ == '__main__':
 
     # Init WandB & Parameters
     wandb.init(project='PPO', config={
-        'env_id': 'randomized_v3',
-        'env_steps': 9e6,
-        'batchsize_ppo': 12,
-        'n_workers': 12,
+        'env_id': 'small_multitarget_v0',
+        'env_steps': 1000000,
+        'batchsize_ppo': 8,
+        'n_workers': 8,
         'lr_ppo': 3e-4,
         'entropy_reg': 0.05,
-        'lambd': [0, 0, 1, 1],
+        'lambd': [1, 1, 1, 1],
         'gamma': 0.999,
         'epsilon': 0.1,
         'ppo_epochs': 5
@@ -47,11 +49,16 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(ppo.parameters(), lr=config.lr_ppo)
     dataset = TrajectoryDataset(batch_size=config.batchsize_ppo, n_workers=config.n_workers)
 
+    max_change_in_v = []
+    last_v = np.zeros(config.n_workers)
     for t in tqdm(range(int(config.env_steps / config.n_workers))):
         actions, log_probs = ppo.act(states_tensor)
-        next_states, rewards, done, info = vec_env.step(actions)
-        scalarized_rewards = [sum([config.lambd[i] * r[i] for i in range(len(r))]) for r in rewards]
+        #max_change_in_v.append(np.max(np.abs(log_probs-last_v)))
+        last_v = log_probs
 
+        next_states, rewards, done, info = vec_env.step(actions)
+
+        scalarized_rewards = [sum([config.lambd[i] * r[i] for i in range(len(r))]) for r in rewards]
         train_ready = dataset.write_tuple(states, actions, scalarized_rewards, done, log_probs, rewards)
 
         if train_ready:
@@ -68,5 +75,7 @@ if __name__ == '__main__':
         states = next_states.copy()
         states_tensor = torch.tensor(states).float().to(device)
 
-    vec_env.close()
-    #torch.save(ppo.state_dict(), 'ppo_v3_' + str(config.lambd) + '.pt')
+
+
+    cwd = os.getcwd()
+    torch.save(ppo.state_dict(), cwd + '/teste' + '.pt')

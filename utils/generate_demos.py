@@ -1,7 +1,7 @@
 from tqdm import tqdm
-from moral.ppo import PPO
+from ppo import PPO
 import torch
-from envs.gym_wrapper import GymWrapper
+from gym_wrapper import GymWrapper
 import pickle
 
 # Use GPU if available

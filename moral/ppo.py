@@ -117,7 +117,7 @@ def update_policy(ppo, dataset, optimizer, gamma, epsilon, n_epochs, entropy_reg
             reward_togo = 0
             returns = []
             normalized_reward = np.array(tau['rewards'])
-            normalized_reward = (normalized_reward - normalized_reward.mean())/(normalized_reward.std()+1e-5)
+            #normalized_reward = (normalized_reward - normalized_reward.mean())/(normalized_reward.std()+1e-5)
             for r in normalized_reward[::-1]:
                 # Compute rewards-to-go and advantage estimates
                 reward_togo = r + gamma * reward_togo
